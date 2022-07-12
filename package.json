@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon index.js",
-    "start": "node index.js --port $PORT"
+    "start": "node index.js"
   },
   "author": "",
   "license": "ISC",
@@ -14,6 +14,11 @@
     "mongodb": "^4.7.0",
     "node-schedule": "^2.1.0",
     "node-telegram-bot-api": "^0.58.0",
-    "nodemon": "^2.0.18"
+    "nodemon": "^2.0.18",
+    "webpack": "^5.73.0"
+  },
+  "devDependencies": {
+    "webpack-cli": "^4.10.0",
+    "webpack-dev-server": "^4.9.3"
   }
 }

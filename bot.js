@@ -20,19 +20,19 @@ module.exports = function(db) {
 
     const chatID = config.chatID;
 
-    const bot = new telegramApi(TOKEN, {polling: true});
+    // const bot = new telegramApi(TOKEN, {polling: true});
 
 
-    // const bot = new telegramApi(TOKEN, {
-    //     webHook : {
-    //         port: PORT,
-    //         autoOpen: false
-    //     }
-    // });
-    // bot.openWebHook();
-    // // Телеграм промит иметь защищенный url address
-    // // мы должны иметь ssl сертификат
-    // bot.setWebHook(`${ngrockUrl}/bot${TOKEN}`);
+    const bot = new telegramApi(TOKEN, {
+        webHook : {
+            port: PORT,
+            autoOpen: false
+        }
+    });
+    bot.openWebHook();
+    // Телеграм промит иметь защищенный url address
+    // мы должны иметь ssl сертификат
+    bot.setWebHook(`https://vladislav-go-beer.herokuapp.com/bot${TOKEN}`);
 
     let Answers = db.collection('answers');
 
