@@ -17,22 +17,55 @@ module.exports = function(db) {
     const TOKEN = config.token;
     const PORT = config.port;
     const ngrockUrl = config.url;
+    const HEROKU_URL = config.HEROKU_URL;
 
     const chatID = config.chatID;
 
     // const bot = new telegramApi(TOKEN, {polling: true});
 
 
-    const bot = new telegramApi(TOKEN, {
-        webHook : {
-            port: PORT,
-            autoOpen: false
-        }
+    // const bot = new telegramApi(TOKEN, {
+    //     webHook : {
+    //         port: PORT,
+    //         autoOpen: false
+    //     }
+    // });
+
+
+    var express = require('express');
+    var packageInfo = require('./package.json');
+    var bodyParser = require('body-parser');
+
+    var app = express();
+    app.use(bodyParser.json());
+
+    app.get('/', function (req, res) {
+        res.json({ version: packageInfo.version });
     });
-    bot.openWebHook();
+
+    var server = app.listen(PORT, function () {
+    var host = server.address().address;
+    var port = server.address().port;
+
+    console.log('Web server started at http://%s:%s', host, port);
+    });
+
+
+
+
+    bot = new telegramApi(TOKEN);
+    bot.setWebHook(HEROKU_URL + bot.token);
+
+
+    app.post('/' + token, function (req, res) {
+        bot.processUpdate(req.body);
+        res.sendStatus(200);
+      });
+
+    // bot.openWebHook();
     // Телеграм промит иметь защищенный url address
     // мы должны иметь ssl сертификат
-    bot.setWebHook(`https://vladislav-go-beer.herokuapp.com/bot${TOKEN}`);
+    // bot.setWebHook(`https://vladislav-go-beer.herokuapp.com/bot${TOKEN}`);
 
     let Answers = db.collection('answers');
 

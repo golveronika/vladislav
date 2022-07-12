@@ -3,5 +3,6 @@
     "token": "5453405617:AAHvV20ymsyf4Wr5ICf7isMFw9_wOpgSiZ0",
     "url": "https://5616-193-179-216-17.eu.ngrok.io",
     "mongoUri": "mongodb+srv://admin:tttmp-2020@cluster0.bxg3i.mongodb.net/tttmp?retryWrites=true&w=majority",
-    "chatID": -1001740397897
+    "chatID": -1001740397897,
+    "HEROKU_URL": "https://vladislav-go-beer.herokuapp.com/"
 }
