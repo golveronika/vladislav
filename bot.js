@@ -41,8 +41,9 @@ module.exports = function(db) {
         const { text, chat: { id } } = msg;
 
         if (text && !text.match(/^\//gm)) {
-            if (text.toLocaleLowerCase().trim().indexOf("найди копромат на") > -1) {
 
+            // console.log(text.toLocaleLowerCase().trim().indexOf("найди компромат на"))
+            if (text.toLocaleLowerCase().trim().indexOf("найди компромат на") > -1) {
                 if (msg.entities && msg.entities[0]) {
                     const mention = text.substr(msg.entities[0].offset + 1, msg.entities[0].length);
                     if (mention.indexOf("golveronika") > -1) {
