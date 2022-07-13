@@ -1,3 +1,4 @@
+const https = require('https');
 const config = require('./config.json');
 require('dotenv').config()
 var token = config.token;
@@ -121,6 +122,17 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
     const job2 = schedule.scheduleJob({ minute: 30 }, function() {
         sentRandom();
     });
+
+	schedule.scheduleJob('*/10 * * * *', selfWakeUpHeroku)
+
+	const selfWakeUpHeroku = () => {
+		const options = {
+			hostname: (new URL(config.url)).hostname,
+			method: 'GET'
+		}
+		https.request(options)
+		console.info('self wake up request done');
+	}
 
 // // hello command
 // bot.onText(/^\/say_hello (.+)$/, function (msg, match) {
