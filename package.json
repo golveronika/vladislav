@@ -5,13 +5,16 @@
   "main": "index.js",
   "dependencies": {
     "body-parser": "^1.14.1",
+    "dotenv": "^16.0.1",
     "express": "^4.13.3",
-    "node-telegram-bot-api": "^0.20.1"
+    "node-telegram-bot-api": "^0.20.1",
+    "nodemon": "^2.0.19"
   },
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js"
   },
   "author": "",
   "license": "ISC"
