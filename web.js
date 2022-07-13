@@ -1,7 +1,7 @@
 var express = require('express');
 var packageInfo = require('./package.json');
 var bodyParser = require('body-parser');
-const config = require('./config/config.json');
+const config = require('./config.json');
 
 var app = express();
 app.use(bodyParser.json());
