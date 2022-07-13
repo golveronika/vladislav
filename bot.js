@@ -20,7 +20,6 @@ console.log('bot server started...');
 //-------------------------------------------------------------------
 
 const MongoClient = require('mongodb').MongoClient;
-const config = require('./config.json');
 const databaseName = 'vladislav';
 const uri = config.mongoUri;
 
