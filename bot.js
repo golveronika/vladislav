@@ -1,4 +1,6 @@
-const https = require('https');
+// const https = require('https');
+const axios = require('axios').default;
+
 const config = require('./config.json');
 require('dotenv').config();
 var token = config.token;
@@ -131,18 +133,26 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
 		sentRandom();
 	});
 
-
-	if (process.env.NODE_ENV === 'production') {
-		const selfWakeUpHeroku = () => {
-			const options = {
-				hostname: (new URL(config.url)).hostname,
-				method: 'GET'
-			}
-			https.request(options)
+	axios.get(config.url)
+		.then(function (response) {
 			console.info('self wake up request done');
-		}
-		schedule.scheduleJob('*/10 * * * *', selfWakeUpHeroku)		
-	}
+		})
+		.catch(function (error) {
+			console.info('self wake up request error');
+		})
+
+
+	// if (process.env.NODE_ENV === 'production') {
+	// 	const selfWakeUpHeroku = () => {
+	// 		const options = {
+	// 			hostname: (new URL(config.url)).hostname,
+	// 			method: 'GET'
+	// 		}
+	// 		https.request(options)
+	// 		console.info('self wake up request done');
+	// 	}
+	// 	schedule.scheduleJob('*/10 * * * *', selfWakeUpHeroku)		
+	// }
 
 });
 
