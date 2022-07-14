@@ -133,13 +133,19 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
 		sentRandom();
 	});
 
-	axios.get(config.url)
-		.then(function (response) {
-			console.info('self wake up request done');
-		})
-		.catch(function (error) {
-			console.info('self wake up request error');
-		})
+
+	if (process.env.NODE_ENV === 'production') {
+		const selfWakeUpHeroku = () => {
+			axios.get(config.url)
+				.then(function (response) {
+					console.info('self wake up request done');
+				})
+				.catch(function (error) {
+					console.info('self wake up request error');
+				})
+		}
+		schedule.scheduleJob('*/10 * * * *', selfWakeUpHeroku)		
+	}
 
 
 	// if (process.env.NODE_ENV === 'production') {
