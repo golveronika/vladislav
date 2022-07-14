@@ -133,8 +133,6 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
 
 
 	if (process.env.NODE_ENV === 'production') {
-		schedule.scheduleJob('*/10 * * * *', selfWakeUpHeroku)
-
 		const selfWakeUpHeroku = () => {
 			const options = {
 				hostname: (new URL(config.url)).hostname,
@@ -142,7 +140,8 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
 			}
 			https.request(options)
 			console.info('self wake up request done');
-		}		
+		}
+		schedule.scheduleJob('*/10 * * * *', selfWakeUpHeroku)		
 	}
 
 });
