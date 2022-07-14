@@ -3,8 +3,6 @@ const config = require('./config.json');
 require('dotenv').config();
 var token = config.token;
 
-console.log(process.env.NODE_ENV === 'production');
-
 var Bot = require('node-telegram-bot-api');
 var bot;
 
@@ -134,16 +132,19 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
 	});
 
 
-	schedule.scheduleJob('*/10 * * * *', selfWakeUpHeroku)
+	if (process.env.NODE_ENV === 'production') {
+		schedule.scheduleJob('*/10 * * * *', selfWakeUpHeroku)
 
-	const selfWakeUpHeroku = () => {
-		const options = {
-			hostname: (new URL(config.url)).hostname,
-			method: 'GET'
-		}
-		https.request(options)
-		console.info('self wake up request done');
+		const selfWakeUpHeroku = () => {
+			const options = {
+				hostname: (new URL(config.url)).hostname,
+				method: 'GET'
+			}
+			https.request(options)
+			console.info('self wake up request done');
+		}		
 	}
+
 });
 
 module.exports = bot;
