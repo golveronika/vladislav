@@ -126,12 +126,12 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
 		}
 	};
 
-	const job = schedule.scheduleJob({ minute: 0 }, function () {
-		sentRandom();
-	});
-	const job2 = schedule.scheduleJob({ minute: 30 }, function () {
-		sentRandom();
-	});
+	// const job = schedule.scheduleJob({ minute: 0 }, function () {
+	// 	sentRandom();
+	// });
+	// const job2 = schedule.scheduleJob({ minute: 30 }, function () {
+	// 	sentRandom();
+	// });
 
 
 	if (process.env.NODE_ENV === 'production') {
