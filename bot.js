@@ -1,27 +1,27 @@
-// const https = require('https');
 const axios = require('axios').default;
+const Bot = require('node-telegram-bot-api');
 
-const config = require('./config.json');
 require('dotenv').config();
-var token = config.token;
 
-var Bot = require('node-telegram-bot-api');
-var bot;
+const TOKEN = (process.env.NODE_ENV === 'production') ? process.env.BOT_TOKEN : process.env.BOT_TEST_TOKEN;
+const webHookUrl = process.env.HEROKU_URL;
+
+let bot;
 
 if (process.env.NODE_ENV === 'production') {
-	bot = new Bot(token);
-	bot.setWebHook(config.url + bot.token);
+	bot = new Bot(TOKEN);
+	bot.setWebHook(webHookUrl + bot.token);
 } else {
-	bot = new Bot(token, { polling: true });
+	bot = new Bot(TOKEN, { polling: true });
 }
 
 console.log('bot server started...');
 
-//-------------------------------------------------------------------
+// Connection to Database an massage handlers:
 
 const MongoClient = require('mongodb').MongoClient;
 const databaseName = 'vladislav';
-const uri = config.mongoUri;
+const uri = process.env.MONGO_URL;
 
 MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (error, client) => {
 	if (error) {
@@ -39,55 +39,56 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
 		'https://pw.artfile.me/wallpaper/11-03-2019/650x249/anime-kantai-collection-seksi-devushki-1444569.jpg'
 	];
 
-	const chatID = config.chatID;
+	const CHAT_ID = process.env.CHAT_ID;
 
 	let Answers = db.collection('answers');
 	let Randoms = db.collection('randoms');
 
-	bot.on('message', (msg) => {
-		const {
-			text,
-			chat: { id }
-		} = msg;
-		if (text && !text.match(/^\//gm)) {
-			if (text.toLocaleLowerCase().trim().indexOf('найди компромат на') > -1) {
-				if (msg.entities && msg.entities[0]) {
-					const mention = text.substr(msg.entities[0].offset + 1, msg.entities[0].length);
-					if (mention.indexOf('golveronika') > -1) {
-						bot.sendMessage(id, `На Веронику ничего не нашел`);
-					} else {
-						const index = Math.floor(Math.random() * kompromat.length);
-						bot.sendPhoto(id, kompromat[index], {
-							caption: `Смотри что я нашел в папке "C:\\\\Users\\${mention}\\drochka\\" у @${mention}`
-						});
-					}
-				}
+	bot.onText(/найди компромат/i, (msg, match) => {
+
+		const entity = msg.entities ? msg.entities[0] : null;
+		const { text } = msg;
+		const chatid = msg.chat.id;
+
+		if (entity) {
+			const mention = text.substr(entity.offset + 1, entity.length);
+			if (mention.toLocaleLowerCase().indexOf('golveronika') > -1) {
+				bot.sendMessage(chatid, `На Веронику ничего не нашел`);
 			} else {
-				Answers.findOne({ key: text.toLocaleLowerCase() }, (error, result) => {
-					if (!error && result) {
-						bot.sendMessage(id, `${result.answer}`);
-					}
+				const index = Math.floor(Math.random() * kompromat.length);
+				bot.sendPhoto(chatid, kompromat[index], {
+					caption: `Смотри что я нашел в папке "C:\\\\Users\\${mention}\\drochka\\" у @${mention}`
 				});
 			}
+		}
+	})
+
+	bot.onText(/\/addRandom (.+)/, (msg, match) => {
+
+		const text = match[1];
+		const chatid = msg.chat.id;
+		
+		if (text) {
+			Randoms.insertOne({
+				text
+			},(error) => {
+				if (error) {
+					return console.log('Unable to insert Random!');
+				} else {
+					bot.sendMessage(chatid, 'Спасибо.');
+				}
+			});
 		}
 	});
 
 	bot.onText(/\/addAnswer (.+)/, (msg, match) => {
 		if (match[1]) {
-			const key = match[1]
-				.match(/^(.+)=/gm)[0]
-				.replace('=', '')
-				.toLocaleLowerCase()
-				.trim();
-			const answer = match[1].replace(key, '').replace('=', '');
+			const key = match[1].split('=')[0];
+			const answer = match[1].split('=')[1];
 
 			if (key && answer) {
-				Answers.insertOne(
-					{
-						key,
-						answer
-					},
-					(error, result) => {
+				Answers.insertOne({ key: key.trim(), answer },
+					(error) => {
 						if (!error) {
 							bot.sendMessage(msg.chat.id, 'Добавил.');
 						}
@@ -97,23 +98,29 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
 		}
 	});
 
-	bot.onText(/\/addRandom (.+)/, (msg, match) => {
-		const text = match[1];
-		if (text) {
-			Randoms.insertOne(
-				{
-					text
-				},
-				(error, result) => {
-					if (error) {
-						return console.log('Unable to insert Random!');
-					} else {
-						bot.sendMessage(msg.chat.id, 'Спасибо.');
-					}
-				}
-			);
+	//Hanldler on ANY message:
+	bot.on('message', async (msg) => {
+		const { text } = msg;
+		const chatid = msg.chat.id;
+
+		if (!text.match(/^\//gm)) {
+
+			const allAnswers = await Answers.find().toArray().then(result => result);
+
+			const answer = allAnswers.find(item => {
+				const currentAnswer = item.answer;
+				let arrKey = item.key.replace(/([^a-zA-Z^а-яА-Я^\s])/gmi, '').split(' ');
+				arrKey = arrKey.map(item => item.toLocaleLowerCase());
+				const match = text.toLocaleLowerCase().match(new RegExp('('+arrKey.join(')|(')+')', 'i'))
+				if (match) return currentAnswer;
+				else false;
+			});
+			if (answer) {
+				bot.sendMessage(chatid, answer.answer);
+			}
 		}
-	});
+	})
+
 
 	const schedule = require('node-schedule');
 
@@ -122,16 +129,19 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
 		const index = Math.floor(Math.random() * length);
 		const message = await Randoms.findOne({}, { skip: index });
 		if (message) {
-			bot.sendMessage(chatID, message.text);
+			bot.sendMessage(CHAT_ID, message.text);
 		}
 	};
 
-	// const job = schedule.scheduleJob({ minute: 0 }, function () {
-	// 	sentRandom();
-	// });
-	// const job2 = schedule.scheduleJob({ minute: 30 }, function () {
-	// 	sentRandom();
-	// });
+	const job = schedule.scheduleJob({ hour: 10 }, function () {
+		sentRandom();
+	});
+	const job2 = schedule.scheduleJob({ hour: 14 }, function () {
+		sentRandom();
+	});
+	const job3 = schedule.scheduleJob({ hour: 18 }, function () {
+		sentRandom();
+	});
 
 
 	if (process.env.NODE_ENV === 'production') {
@@ -146,19 +156,6 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
 		}
 		schedule.scheduleJob('*/10 * * * *', selfWakeUpHeroku)		
 	}
-
-
-	// if (process.env.NODE_ENV === 'production') {
-	// 	const selfWakeUpHeroku = () => {
-	// 		const options = {
-	// 			hostname: (new URL(config.url)).hostname,
-	// 			method: 'GET'
-	// 		}
-	// 		https.request(options)
-	// 		console.info('self wake up request done');
-	// 	}
-	// 	schedule.scheduleJob('*/10 * * * *', selfWakeUpHeroku)		
-	// }
 
 });
 

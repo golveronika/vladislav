@@ -3,8 +3,6 @@ var packageInfo = require('./package.json');
 var bodyParser = require('body-parser');
 require('dotenv').config();
 
-console.log(process.env);
-
 var app = express();
 app.use(bodyParser.json());
 
