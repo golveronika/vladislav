@@ -146,7 +146,7 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
 
 	if (process.env.NODE_ENV === 'production') {
 		const selfWakeUpHeroku = () => {
-			axios.get(config.url)
+			axios.get(webHookUrl)
 				.then(function (response) {
 					console.info('self wake up request done');
 				})
