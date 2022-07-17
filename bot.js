@@ -133,7 +133,7 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
 		}
 	};
 
-	const job = schedule.scheduleJob({ hour: 10 }, function () {
+	/* const job = schedule.scheduleJob({ hour: 10 }, function () {
 		sentRandom();
 	});
 	const job2 = schedule.scheduleJob({ hour: 14 }, function () {
@@ -141,7 +141,7 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
 	});
 	const job3 = schedule.scheduleJob({ hour: 18 }, function () {
 		sentRandom();
-	});
+	}); */
 
 
 	if (process.env.NODE_ENV === 'production') {
