@@ -110,7 +110,7 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
 				bot.sendPoll(
 					chatid, 
 					`${question} @all душечки красотулечки, вы как? Идём ${question.replace('Cобирайтесь все', '')}?`, 
-					['Иду','Не иду','Не знаю']);
+					['Иду','Не иду','Не знаю'], { is_anonymous: false});
 				return;
 			} 
 
