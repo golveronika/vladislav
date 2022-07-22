@@ -133,7 +133,7 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
 
 	const schedule = require('node-schedule');
 
-	const sentRandom = async () => {
+	const sendRandom = async () => {
 		const length = await Randoms.count();
 		const index = Math.floor(Math.random() * length);
 		const message = await Randoms.findOne({}, { skip: index });
@@ -142,15 +142,15 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
 		}
 	};
 
-	/* const job = schedule.scheduleJob({ hour: 10 }, function () {
-		sentRandom();
+	const job = schedule.scheduleJob({ hour: 14, minute: 0 }, function () {
+		sendRandom();
 	});
-	const job2 = schedule.scheduleJob({ hour: 14 }, function () {
-		sentRandom();
-	});
-	const job3 = schedule.scheduleJob({ hour: 18 }, function () {
-		sentRandom();
-	}); */
+	// const job2 = schedule.scheduleJob({ hour: 14 }, function () {
+	// 	sendRandom();
+	// });
+	// const job3 = schedule.scheduleJob({ hour: 18 }, function () {
+	// 	sendRandom();
+	// });
 
 
 	if (process.env.NODE_ENV === 'production') {
