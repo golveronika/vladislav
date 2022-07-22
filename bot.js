@@ -103,7 +103,7 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
 		const { text } = msg;
 		const chatid = msg.chat.id;
 
-		if (!text.match(/^\//gm)) {
+		if (text && !text.match(/^\//gm)) {
 
 			const allAnswers = await Answers.find().toArray().then(result => result);
 
