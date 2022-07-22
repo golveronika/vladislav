@@ -105,6 +105,15 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
 
 		if (text && !text.match(/^\//gm)) {
 
+			if (text.toLocaleLowerCase().indexOf('собери всех на') >= 0) {
+				const question = text.replace('собери', 'Cобирайтесь').replace('всех', 'все')
+				bot.sendPoll(
+					chatid, 
+					`${question} @all душечки красотулечки, вы как? Идём ${question.replace('Cобирайтесь все', '')}?`, 
+					['Иду','Не иду','Не знаю']);
+				return;
+			} 
+
 			const allAnswers = await Answers.find().toArray().then(result => result);
 
 			const answer = allAnswers.find(item => {
