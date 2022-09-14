@@ -3,7 +3,7 @@ const Bot = require('node-telegram-bot-api');
 
 require('dotenv').config();
 
-const TOKEN = (process.env.NODE_ENV === 'production') ? process.env.BOT_TOKEN : process.env.BOT_TEST_TOKEN;
+const TOKEN = process.env.NODE_ENV === 'production' ? process.env.BOT_TOKEN : process.env.BOT_TEST_TOKEN;
 const webHookUrl = process.env.HEROKU_URL;
 
 let bot;
@@ -22,6 +22,38 @@ console.log('bot server started...');
 const MongoClient = require('mongodb').MongoClient;
 const databaseName = 'vladislav';
 const uri = process.env.MONGO_URL;
+
+let cachedArray = {};
+
+const messageCountParser = (message) => {
+	wordArray = message
+		.replace(/,/g, ' ')
+		.replace('.', ' ')
+		.replace('?', ' ')
+		.toLowerCase()
+		.split(' ')
+		.filter((word) => word.length >= 3);
+	addWordsToCachedArray(wordArray);
+};
+
+const addWordsToCachedArray = (wordArray) => {
+	let countWordsArray = {};
+	for (let i = 0; i < wordArray.length; i++) {
+		let word = wordArray[i];
+		countWordsArray[word] = countWordsArray[word] + 1 || 1;
+	}
+	if (Object.keys(cachedArray).length === 0) {
+		cachedArray = countWordsArray;
+	} else {
+		Object.keys(countWordsArray).forEach((word) => {
+			cachedArray[word] = (cachedArray[word] ? cachedArray[word] : 0) + countWordsArray[word];
+		});
+	}
+};
+
+// const writeWordsToBD = (Words) => {
+// 	Words.
+// }
 
 MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (error, client) => {
 	if (error) {
@@ -43,9 +75,9 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
 
 	let Answers = db.collection('answers');
 	let Randoms = db.collection('randoms');
+	let Words = db.collection('words');
 
 	bot.onText(/найди компромат/i, (msg, match) => {
-
 		const entity = msg.entities ? msg.entities[0] : null;
 		const { text } = msg;
 		const chatid = msg.chat.id;
@@ -61,23 +93,31 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
 				});
 			}
 		}
-	})
+	});
+
+	bot.onText(/\/checkWords (.+)/, (msg, match) => {
+		const chatid = msg.chat.id;
+		const words = Words.find().sort({ count: -1 }).limit(10);
+		console.log(words);
+	});
 
 	bot.onText(/\/addRandom (.+)/, (msg, match) => {
-
 		const text = match[1];
 		const chatid = msg.chat.id;
-		
+
 		if (text) {
-			Randoms.insertOne({
-				text
-			},(error) => {
-				if (error) {
-					return console.log('Unable to insert Random!');
-				} else {
-					bot.sendMessage(chatid, 'Спасибо.');
+			Randoms.insertOne(
+				{
+					text
+				},
+				(error) => {
+					if (error) {
+						return console.log('Unable to insert Random!');
+					} else {
+						bot.sendMessage(chatid, 'Спасибо.');
+					}
 				}
-			});
+			);
 		}
 	});
 
@@ -87,13 +127,11 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
 			const answer = match[1].split('=')[1];
 
 			if (key && answer) {
-				Answers.insertOne({ key: key.trim(), answer },
-					(error) => {
-						if (!error) {
-							bot.sendMessage(msg.chat.id, 'Добавил.');
-						}
+				Answers.insertOne({ key: key.trim(), answer }, (error) => {
+					if (!error) {
+						bot.sendMessage(msg.chat.id, 'Добавил.');
 					}
-				);
+				});
 			}
 		}
 	});
@@ -104,23 +142,26 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
 		const chatid = msg.chat.id;
 
 		if (text && !text.match(/^\//gm)) {
-
 			if (text.toLocaleLowerCase().indexOf('собери всех на') >= 0) {
-				const question = text.toLocaleLowerCase().replace('собери', 'Cобирайтесь').replace('всех', 'все')
+				const question = text.toLocaleLowerCase().replace('собери', 'Cобирайтесь').replace('всех', 'все');
 				bot.sendPoll(
-					chatid, 
-					`${question} @all душечки красотулечки, вы как? Идём ${question.replace('Cобирайтесь все', '')}?`, 
-					['Иду','Не иду','Не знаю'], { is_anonymous: false});
+					chatid,
+					`${question} @all душечки красотулечки, вы как? Идём ${question.replace('Cобирайтесь все', '')}?`,
+					['Иду', 'Не иду', 'Не знаю'],
+					{ is_anonymous: false }
+				);
 				return;
-			} 
+			}
 
-			const allAnswers = await Answers.find().toArray().then(result => result);
+			const allAnswers = await Answers.find()
+				.toArray()
+				.then((result) => result);
 
-			const answer = allAnswers.find(item => {
+			const answer = allAnswers.find((item) => {
 				const currentAnswer = item.answer;
-				let arrKey = item.key.replace(/([^a-zA-Z^а-яА-Я^\s])/gmi, '').split(' ');
-				arrKey = arrKey.map(item => item.toLocaleLowerCase());
-				const match = text.toLocaleLowerCase().match(new RegExp('('+arrKey.join(')|(')+')', 'i'))
+				let arrKey = item.key.replace(/([^a-zA-Z^а-яА-Я^\s])/gim, '').split(' ');
+				arrKey = arrKey.map((item) => item.toLocaleLowerCase());
+				const match = text.toLocaleLowerCase().match(new RegExp('(' + arrKey.join(')|(') + ')', 'i'));
 				if (match) return currentAnswer;
 				else false;
 			});
@@ -128,8 +169,7 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
 				bot.sendMessage(chatid, answer.answer);
 			}
 		}
-	})
-
+	});
 
 	const schedule = require('node-schedule');
 
@@ -152,20 +192,23 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
 	// 	sendRandom();
 	// });
 
+	const messageCountParser = (message) => {
+		wordArray = message.split(' ').filter((word) => word.length >= 3);
+	};
 
 	if (process.env.NODE_ENV === 'production') {
 		const selfWakeUpHeroku = () => {
-			axios.get(webHookUrl)
+			axios
+				.get(webHookUrl)
 				.then(function (response) {
 					console.info('self wake up request done');
 				})
 				.catch(function (error) {
 					console.info('self wake up request error');
-				})
-		}
-		schedule.scheduleJob('*/10 * * * *', selfWakeUpHeroku)		
+				});
+		};
+		schedule.scheduleJob('*/10 * * * *', selfWakeUpHeroku);
 	}
-
 });
 
 module.exports = bot;
