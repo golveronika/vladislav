@@ -45,15 +45,12 @@ const addWordsToCachedArray = (wordArray) => {
 	if (Object.keys(cachedArray).length === 0) {
 		cachedArray = countWordsArray;
 	} else {
+		// merging cachedArray and countWordsArray
 		Object.keys(countWordsArray).forEach((word) => {
 			cachedArray[word] = (cachedArray[word] ? cachedArray[word] : 0) + countWordsArray[word];
 		});
 	}
 };
-
-// const writeWordsToBD = (Words) => {
-// 	Words.
-// }
 
 MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (error, client) => {
 	if (error) {
@@ -77,6 +74,26 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
 	let Randoms = db.collection('randoms');
 	let Words = db.collection('words');
 
+	const executeWordsRecordToMongoFromCached = async () => {
+		// exit if cached array is empty
+		if (Object.keys(cachedArray).length === 0) {
+			return;
+		}
+
+		var bulk = Words.initializeUnorderedBulkOp();
+		// prepare bulk update operations
+		Object.keys(cachedArray).forEach((key) => {
+			bulk
+				.find({ _id: key })
+				.upsert()
+				.updateOne({ $inc: { count: cachedArray[key] } });
+		});
+		// execute updates
+		await bulk.execute();
+		// empty cached array
+		cachedArray = {};
+	};
+
 	bot.onText(/найди компромат/i, (msg, match) => {
 		const entity = msg.entities ? msg.entities[0] : null;
 		const { text } = msg;
@@ -95,10 +112,21 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
 		}
 	});
 
-	bot.onText(/\/checkWords (.+)/, (msg, match) => {
+	bot.onText(/\/checkWords (.+)/, async (msg, match) => {
+		const text = match[1];
 		const chatid = msg.chat.id;
-		const words = Words.find().sort({ count: -1 }).limit(10);
-		console.log(words);
+		if (text === 'cached') {
+			bot.sendMessage(chatid, `закэшированно пока что:\n ${JSON.stringify(cachedArray)}`);
+			return;
+		}
+		const requestedWords = await Words.find().sort({ count: -1 }, { item: 1, status: 1 }).limit(10).toArray();
+		if (requestedWords.length === 0) {
+			bot.sendMessage(chatid, 'пока что нет слов, пишите, пишите');
+			return;
+		}
+		let messageString = '';
+		requestedWords.forEach((word) => (messageString += `${word._id} : ${word.count}\n`));
+		bot.sendMessage(chatid, messageString);
 	});
 
 	bot.onText(/\/addRandom (.+)/, (msg, match) => {
@@ -140,6 +168,9 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
 	bot.on('message', async (msg) => {
 		const { text } = msg;
 		const chatid = msg.chat.id;
+
+		// parse, count and store words in cachedArray
+		messageCountParser(text);
 
 		if (text && !text.match(/^\//gm)) {
 			if (text.toLocaleLowerCase().indexOf('собери всех на') >= 0) {
@@ -185,16 +216,18 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
 	const job = schedule.scheduleJob({ hour: 14, minute: 0 }, function () {
 		sendRandom();
 	});
+
+	// once a 15 mins put words into mongodb
+	const putWordsToMongoJob = schedule.scheduleJob('*/15 * * * *', async function () {
+		await executeWordsRecordToMongoFromCached();
+	});
+
 	// const job2 = schedule.scheduleJob({ hour: 14 }, function () {
 	// 	sendRandom();
 	// });
 	// const job3 = schedule.scheduleJob({ hour: 18 }, function () {
 	// 	sendRandom();
 	// });
-
-	const messageCountParser = (message) => {
-		wordArray = message.split(' ').filter((word) => word.length >= 3);
-	};
 
 	if (process.env.NODE_ENV === 'production') {
 		const selfWakeUpHeroku = () => {
