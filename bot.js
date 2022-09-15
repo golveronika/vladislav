@@ -119,6 +119,9 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
 			bot.sendMessage(chatid, `закэшированно пока что:\n ${JSON.stringify(cachedArray)}`);
 			return;
 		}
+	});
+
+	bot.onText(/\/checkWords/, async (msg, match) => {
 		const requestedWords = await Words.find().sort({ count: -1 }, { item: 1, status: 1 }).limit(10).toArray();
 		if (requestedWords.length === 0) {
 			bot.sendMessage(chatid, 'пока что нет слов, пишите, пишите');
