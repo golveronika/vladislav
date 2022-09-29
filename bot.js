@@ -1,7 +1,16 @@
 const axios = require('axios').default;
 const Bot = require('node-telegram-bot-api');
+const Az = require('az');
+const _ = require('lodash');
+const loadMorph = new Promise((resolve, reject) => {
+	Az.Morph.init(function () {
+		resolve();
+	});
+});
 
 require('dotenv').config();
+
+const EXCLUDED_PARTS_OF_SPEECH = ['ADVB', 'PRED', 'PREP', 'CONJ', 'PRCL', 'LATN'];
 
 let bot;
 
@@ -23,14 +32,20 @@ const uri = process.env.MONGO_URL;
 let cachedArray = {};
 
 const messageCountParser = (message) => {
-	wordArray = message
-		.replace(/,/g, ' ')
-		.replace('.', ' ')
-		.replace('?', ' ')
-		.toLowerCase()
-		.split(' ')
-		.filter((word) => word.length >= 3);
-	addWordsToCachedArray(wordArray);
+	loadMorph.then((ignored) => {
+		const tokens = Az.Tokens(message).done(['WORD']);
+		const variants = tokens.map((t) => t.toString()).flatMap((t) => Az.Morph(t, { stutter: 0 }));
+		const variantsByWord = _.groupBy(variants, (v) => v.word);
+		const wordArray = [];
+
+		for (let word in variantsByWord) {
+			// taking the first variant because it is more likely to contain a correct part of speech
+			if (!EXCLUDED_PARTS_OF_SPEECH.includes(variantsByWord[word][0].tag.POST)) {
+				wordArray.push(word);
+			}
+		}
+		addWordsToCachedArray(wordArray);
+	});
 };
 
 const addWordsToCachedArray = (wordArray) => {
