@@ -230,19 +230,19 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
 	// 	sendRandom();
 	// });
 
-	if (process.env.NODE_ENV === 'production') {
-		const selfWakeUpHeroku = () => {
-			axios
-				.get(webHookUrl)
-				.then(function (response) {
-					console.info('self wake up request done');
-				})
-				.catch(function (error) {
-					console.info('self wake up request error');
-				});
-		};
-		schedule.scheduleJob('*/10 * * * *', selfWakeUpHeroku);
-	}
+	// if (process.env.NODE_ENV === 'production') {
+	// 	const selfWakeUpHeroku = () => {
+	// 		axios
+	// 			.get(webHookUrl)
+	// 			.then(function (response) {
+	// 				console.info('self wake up request done');
+	// 			})
+	// 			.catch(function (error) {
+	// 				console.info('self wake up request error');
+	// 			});
+	// 	};
+	// 	schedule.scheduleJob('*/10 * * * *', selfWakeUpHeroku);
+	// }
 });
 
 module.exports = bot;
