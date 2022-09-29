@@ -3,25 +3,23 @@ const Bot = require('node-telegram-bot-api');
 const Az = require('az');
 const _ = require('lodash');
 const loadMorph = new Promise((resolve, reject) => {
-    Az.Morph.init(function() {
-        resolve();
-    })
+	Az.Morph.init(function () {
+		resolve();
+	});
 });
 
 require('dotenv').config();
 
-const TOKEN = process.env.NODE_ENV === 'production' ? process.env.BOT_TOKEN : process.env.BOT_TEST_TOKEN;
-const webHookUrl = process.env.HEROKU_URL;
-const EXCLUDED_PARTS_OF_SPEECH = ["ADVB", "PRED", "PREP", "CONJ", "PRCL", "LATN"];
+const EXCLUDED_PARTS_OF_SPEECH = ['ADVB', 'PRED', 'PREP', 'CONJ', 'PRCL', 'LATN'];
 
 let bot;
 
-if (process.env.NODE_ENV === 'production') {
-	bot = new Bot(TOKEN);
-	bot.setWebHook(webHookUrl + bot.token);
-} else {
-	bot = new Bot(TOKEN, { polling: true });
+const TOKEN = process.env.BOT_TOKEN;
+if (!TOKEN) {
+	throw new Error('Telegram token not provided');
 }
+
+bot = new Bot(TOKEN, { polling: true });
 
 console.log('bot server started...');
 
@@ -34,12 +32,10 @@ const uri = process.env.MONGO_URL;
 let cachedArray = {};
 
 const messageCountParser = (message) => {
-	loadMorph.then(ignored => {
-		const tokens = Az.Tokens(message).done(["WORD"]);
-		const variants = tokens
-			.map(t => t.toString())
-			.flatMap(t => Az.Morph(t, { stutter: 0 }));
-		const variantsByWord = _.groupBy(variants, v => v.word);
+	loadMorph.then((ignored) => {
+		const tokens = Az.Tokens(message).done(['WORD']);
+		const variants = tokens.map((t) => t.toString()).flatMap((t) => Az.Morph(t, { stutter: 0 }));
+		const variantsByWord = _.groupBy(variants, (v) => v.word);
 		const wordArray = [];
 
 		for (let word in variantsByWord) {
@@ -249,19 +245,19 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
 	// 	sendRandom();
 	// });
 
-	if (process.env.NODE_ENV === 'production') {
-		const selfWakeUpHeroku = () => {
-			axios
-				.get(webHookUrl)
-				.then(function (response) {
-					console.info('self wake up request done');
-				})
-				.catch(function (error) {
-					console.info('self wake up request error');
-				});
-		};
-		schedule.scheduleJob('*/10 * * * *', selfWakeUpHeroku);
-	}
+	// if (process.env.NODE_ENV === 'production') {
+	// 	const selfWakeUpHeroku = () => {
+	// 		axios
+	// 			.get(webHookUrl)
+	// 			.then(function (response) {
+	// 				console.info('self wake up request done');
+	// 			})
+	// 			.catch(function (error) {
+	// 				console.info('self wake up request error');
+	// 			});
+	// 	};
+	// 	schedule.scheduleJob('*/10 * * * *', selfWakeUpHeroku);
+	// }
 });
 
 module.exports = bot;
