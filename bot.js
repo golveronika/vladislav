@@ -34,15 +34,15 @@ const uri = process.env.MONGO_URL;
 let cachedArray = {};
 
 const messageCountParser = (message) => {
-    	loadMorph.then(ignored => {
-        	const tokens = Az.Tokens(message).done(["WORD"]);
-        	const variants = tokens
+	loadMorph.then(ignored => {
+		const tokens = Az.Tokens(message).done(["WORD"]);
+		const variants = tokens
 			.map(t => t.toString())
 			.flatMap(t => Az.Morph(t, { stutter: 0 }));
-        	const variantsByWord = _.groupBy(variants, v => v.word);
-        	const wordArray = [];
+		const variantsByWord = _.groupBy(variants, v => v.word);
+		const wordArray = [];
 
-        	for (let word in variantsByWord) {
+		for (let word in variantsByWord) {
 			if (!EXCLUDED_PARTS_OF_SPEECH.includes(variantsByWord[word][0].tag.POST)) {
 				wordArray.push(word);
 			}
