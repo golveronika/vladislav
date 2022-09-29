@@ -17,12 +17,10 @@ const EXCLUDED_PARTS_OF_SPEECH = ["ADVB", "PRED", "PREP", "CONJ", "PRCL", "LATN"
 let bot;
 
 if (process.env.NODE_ENV === 'production') {
-    	bot = new Bot(TOKEN);
-    	bot.setWebHook(webHookUrl + bot.token);
+        bot = new Bot(TOKEN);
+        bot.setWebHook(webHookUrl + bot.token);
 } else {
-    	bot = new Bot(TOKEN, {
-        	polling: true
-    	});
+        bot = new Bot(TOKEN, { polling: true });
 }
 
 console.log('bot server started...');
@@ -39,36 +37,34 @@ const messageCountParser = (message) => {
     	loadMorph.then(ignored => {
         	const tokens = Az.Tokens(message).done(["WORD"]);
         	const variants = tokens
-            	.map(t => t.toString())
-            	.flatMap(t => Az.Morph(t, {
-                	stutter: 0
-           	 }));
+			.map(t => t.toString())
+			.flatMap(t => Az.Morph(t, { stutter: 0 }));
         	const variantsByWord = _.groupBy(variants, v => v.word);
         	const wordArray = [];
 
         	for (let word in variantsByWord) {
-            	if (!EXCLUDED_PARTS_OF_SPEECH.includes(variantsByWord[word][0].tag.POST)) {
-                	wordArray.push(word);
-            	}
-        	}
-        	addWordsToCachedArray(wordArray);
-    	});
+			if (!EXCLUDED_PARTS_OF_SPEECH.includes(variantsByWord[word][0].tag.POST)) {
+				wordArray.push(word);
+			}
+		}
+		addWordsToCachedArray(wordArray);
+	});
 };
 
 const addWordsToCachedArray = (wordArray) => {
-    	let countWordsArray = {};
-    	for (let i = 0; i < wordArray.length; i++) {
-        	let word = wordArray[i];
-        	countWordsArray[word] = countWordsArray[word] + 1 || 1;
-    	}
-    	if (Object.keys(cachedArray).length === 0) {
-        	cachedArray = countWordsArray;
-    	} else {
-        	// merging cachedArray and countWordsArray
-        	Object.keys(countWordsArray).forEach((word) => {
-            	cachedArray[word] = (cachedArray[word] ? cachedArray[word] : 0) + countWordsArray[word];
-        	});
-    	}
+	let countWordsArray = {};
+	for (let i = 0; i < wordArray.length; i++) {
+		let word = wordArray[i];
+		countWordsArray[word] = countWordsArray[word] + 1 || 1;
+	}
+	if (Object.keys(cachedArray).length === 0) {
+		cachedArray = countWordsArray;
+	} else {
+		// merging cachedArray and countWordsArray
+		Object.keys(countWordsArray).forEach((word) => {
+			cachedArray[word] = (cachedArray[word] ? cachedArray[word] : 0) + countWordsArray[word];
+		});
+	}
 };
 
 MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (error, client) => {
