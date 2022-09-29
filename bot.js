@@ -3,17 +3,14 @@ const Bot = require('node-telegram-bot-api');
 
 require('dotenv').config();
 
-const TOKEN = process.env.NODE_ENV === 'production' ? process.env.BOT_TOKEN : process.env.BOT_TEST_TOKEN;
-const webHookUrl = process.env.HEROKU_URL;
-
 let bot;
 
-if (process.env.NODE_ENV === 'production') {
-	bot = new Bot(TOKEN);
-	bot.setWebHook(webHookUrl + bot.token);
-} else {
-	bot = new Bot(TOKEN, { polling: true });
+const TOKEN = process.env.BOT_TOKEN;
+if (!TOKEN) {
+	throw new Error('Telegram token not provided');
 }
+
+bot = new Bot(TOKEN, { polling: true });
 
 console.log('bot server started...');
 
