@@ -10,8 +10,6 @@ const loadMorph = new Promise((resolve, reject) => {
 
 require('dotenv').config();
 
-const TOKEN = process.env.NODE_ENV === 'production' ? process.env.BOT_TOKEN : process.env.BOT_TEST_TOKEN;
-const webHookUrl = process.env.HEROKU_URL;
 const EXCLUDED_PARTS_OF_SPEECH = ["PRED", "PREP", "CONJ", "PRCL", "LATN"];
 
 let bot;
