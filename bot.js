@@ -43,6 +43,7 @@ const messageCountParser = (message) => {
 		const wordArray = [];
 
 		for (let word in variantsByWord) {
+			// taking the first variant because it is more likely to contain a correct part of speech
 			if (!EXCLUDED_PARTS_OF_SPEECH.includes(variantsByWord[word][0].tag.POST)) {
 				wordArray.push(word);
 			}
