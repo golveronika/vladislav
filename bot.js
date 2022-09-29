@@ -17,10 +17,10 @@ const EXCLUDED_PARTS_OF_SPEECH = ["ADVB", "PRED", "PREP", "CONJ", "PRCL", "LATN"
 let bot;
 
 if (process.env.NODE_ENV === 'production') {
-        bot = new Bot(TOKEN);
-        bot.setWebHook(webHookUrl + bot.token);
+	bot = new Bot(TOKEN);
+	bot.setWebHook(webHookUrl + bot.token);
 } else {
-        bot = new Bot(TOKEN, { polling: true });
+	bot = new Bot(TOKEN, { polling: true });
 }
 
 console.log('bot server started...');
