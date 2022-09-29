@@ -5,15 +5,16 @@
   "main": "index.js",
   "dependencies": {
     "axios": "^0.27.2",
+    "az": "^0.2.3",
     "body-parser": "^1.14.1",
     "dotenv": "^16.0.1",
     "express": "^4.13.3",
+    "lodash": "^4.17.21",
     "mongodb": "^4.7.0",
     "node-schedule": "^2.1.0",
     "node-telegram-bot-api": "^0.58.0",
     "nodemon": "^2.0.19"
   },
-  "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js",
