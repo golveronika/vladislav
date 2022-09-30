@@ -10,7 +10,7 @@ const loadMorph = new Promise((resolve, reject) => {
 
 require('dotenv').config();
 
-const EXCLUDED_PARTS_OF_SPEECH = ['ADVB', 'PRED', 'PREP', 'CONJ', 'PRCL', 'LATN'];
+const EXCLUDED_PARTS_OF_SPEECH = ["NPRO", "PRED", "PREP", "CONJ", "PRCL", "LATN"];
 
 let bot;
 
@@ -31,11 +31,17 @@ const uri = process.env.MONGO_URL;
 
 let cachedArray = {};
 
+const nullSafe = (value) => {
+        return value ? value : "";
+}
+
 const messageCountParser = (message) => {
-	loadMorph.then((ignored) => {
-		const tokens = Az.Tokens(message).done(['WORD']);
-		const variants = tokens.map((t) => t.toString()).flatMap((t) => Az.Morph(t, { stutter: 0 }));
-		const variantsByWord = _.groupBy(variants, (v) => v.word);
+	loadMorph.then(ignored => {
+		const tokens = Az.Tokens(message).done(["WORD"]);
+		const variants = tokens
+			.map(t => t.toString())
+			.flatMap(t => Az.Morph(t, { stutter: 0, replacements: {}, forceParse: true }));
+		const variantsByWord = _.groupBy(variants, v => nullSafe(v.prefix) + v.word + nullSafe(v.suffix));
 		const wordArray = [];
 
 		for (let word in variantsByWord) {
