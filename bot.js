@@ -39,7 +39,7 @@ const messageCountParser = (message) => {
 	loadMorph.then(ignored => {
 		const tokens = Az.Tokens(message).done(["WORD"]);
 		const variants = tokens
-			.map(t => t.toString())
+			.map(t => t.toString().toLowerCase())
 			.flatMap(t => Az.Morph(t, { stutter: 0, replacements: {}, forceParse: true }));
 		const variantsByWord = _.groupBy(variants, v => nullSafe(v.prefix) + v.word + nullSafe(v.suffix));
 		const wordArray = [];
